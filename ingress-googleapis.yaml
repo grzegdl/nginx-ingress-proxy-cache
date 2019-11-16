@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: googleapis
+  namespace: nginx-ingress-caching
+  annotations:
+    kubernetes.io/ingress.class: "nginx-caching"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/upstream-vhost: www.googleapis.com
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_cache static-cache;
+      proxy_cache_valid 200 10m;
+      proxy_cache_background_update on;
+      proxy_cache_lock on;
+      proxy_cache_revalidate on;
+      proxy_ignore_headers Cache-Control expires;
+      proxy_cache_use_stale error timeout updating http_404 http_500 http_502 http_503 http_504;
+      proxy_cache_bypass $http_x_purge;
+      add_header X-Cache-Status $upstream_cache_status;
+spec:
+  rules:
+    - host: www.googleapis.com
+      http:
+        paths:
+          - path: /youtube/
+            backend:
+              serviceName: www-googleapis-com
+              servicePort: 443

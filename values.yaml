@@ -1,0 +1,37 @@
+controller:
+  name: controller
+  image:
+    repository: quay.io/kubernetes-ingress-controller/nginx-ingress-controller
+    tag: "0.26.1"
+    pullPolicy: IfNotPresent
+  extraArgs:
+    enable-ssl-passthrough: true
+  electionID: ingress-controller-leader-caching
+  ingressClass: nginx-caching
+  replicaCount: 2
+  publishService:
+    enabled: true
+  service:
+    type: ClusterIP
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "10254"
+  stats:
+    enabled: true
+  config:
+    http-snippet: |
+      proxy_cache_path /tmp/nginx-cache levels=1:2 keys_zone=static-cache:2m max_size=100m inactive=7d use_temp_path=off;
+      proxy_cache_key $scheme$proxy_host$request_uri;
+      proxy_cache_lock on;
+      proxy_cache_use_stale updating;
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 150M
